@@ -1,0 +1,50 @@
+.navbar{
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 100px;
+    background-color: #f1f5f9;
+}
+.navbarLinks a{
+    padding: 10px 20px;
+}
+.loginBtnNavbar{
+    padding: 7px 25px;
+    border-radius: 7px;
+    background-color: #2563eb;
+    color: white;
+    cursor: pointer;
+}
+.mobileLinks{
+    position: fixed;
+    z-index: 1000;
+    border: 2px solid red;
+    width: 100vw;
+    height: 100vh;
+    right: -100vw;
+    /* animation: toRight 1s 1 ; */
+    transition: all 1s;
+}
+.open{
+    right: 0vw;
+}
+@keyframes toRight {
+    from{
+        right: -100vw;
+    }
+    to{
+        right: 0vw;
+    }
+}
+@media(max-width:900px){
+    .navbar{
+        padding: 20px 30px;
+    }
+}
+@media(max-width:600px){
+    .navbar{
+        padding: 20px 30px;
+    }
+    .navbarLinks{
+        display: none;
+    }
+}

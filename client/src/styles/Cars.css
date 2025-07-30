@@ -1,0 +1,20 @@
+.carsHeading{
+    height: 350px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f1f5f9;
+}
+.carsHeadingText{
+    font-weight: 600;
+    font-size: 32px;
+}
+.carsListDescription{
+    color: #777f8d;
+}
+.listHeading{
+    font-size: 24px;
+    font-weight: 600;
+    padding-left: 150px;
+    margin: 30px 0 20px 0;
+}
