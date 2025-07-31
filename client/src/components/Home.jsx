@@ -4,6 +4,7 @@ import "../styles/Home.css";
 import { assets } from "../assets/assets";
 import { Users, Fuel, Settings, MapPin, Star } from "lucide-react";
 import { Facebook, Instagram, Twitter, Mail, Phone } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const cars = [
@@ -120,6 +121,7 @@ export default function Home() {
     },
   ];
 
+  const navigate=useNavigate();
     const [email, setEmail] = useState('');
 
   const handleSubscribe = (e) => {
@@ -197,7 +199,7 @@ export default function Home() {
                 <br />
                 you can earn passive income, stress-free.
               </p>
-              <button className="ctaButton">List your car</button>
+              <button className="ctaButton" onClick={() => {navigate("/list-car")}}>List your car</button>
             </div>
 
             <div className="imageSection">

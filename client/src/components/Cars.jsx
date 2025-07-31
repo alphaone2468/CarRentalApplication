@@ -1,6 +1,7 @@
 import React from 'react'
 import '../styles/Cars.css'
 import { Users, Fuel, Settings, MapPin, Star } from "lucide-react";
+import {useNavigate} from 'react-router-dom'
 
 export default function Cars() {
     const cars = [
@@ -161,6 +162,8 @@ export default function Cars() {
       location: "Miami",
     },
   ];
+
+  const navigate=useNavigate();
   return (
     <div>
 
@@ -176,7 +179,7 @@ export default function Cars() {
                   {cars.map((car) => (
                     <div key={car.id} className="card">
                       <div className="imageContainer">
-                        <img src={car.image} alt={car.name} className="carImage" />
+                        <img src={car.image} alt={car.name} className="carImage" onClick={()=>navigate("/car-details")} />
                         <div className="availableBadge">Available Now</div>
                         <div className="priceTag">
                           <span className="price">${car.price}</span>
