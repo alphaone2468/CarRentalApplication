@@ -131,6 +131,10 @@ export default function Home() {
     setEmail('');
   };
 
+
+
+
+
   return (
     <div>
       <div className="mainHeadingContainer">
@@ -149,7 +153,6 @@ export default function Home() {
             <div key={car.id} className="card">
               <div className="imageContainer">
                 <img src={car.image} alt={car.name} className="carImage" />
-                <div className="availableBadge">Available Now</div>
                 <div className="priceTag">
                   <span className="price">${car.price}</span>
                   <span className="period">/ day</span>
@@ -287,86 +290,116 @@ export default function Home() {
   </div>
 
   {/* Footer Section */}
-  <div className="footerSection">
-    <div className="footerContent">
-      <div className="footerGrid">
-        {/* Brand Column */}
-        <div className="brandColumn">
-          <div className="logo">
-            <div className="logoIcon">🚗</div>
-            <span className="logoText">CarRental</span>
-          </div>
-          <p className="brandDescription">
-            Premium car rental service with a wide selection of luxury and everyday vehicles for all your driving needs.
-          </p>
-          <div className="socialLinks">
-            <a href="#" className="socialLink"><Facebook size={20} /></a>
-            <a href="#" className="socialLink"><Instagram size={20} /></a>
-            <a href="#" className="socialLink"><Twitter size={20} /></a>
-            <a href="#" className="socialLink"><Mail size={20} /></a>
-          </div>
-        </div>
-
-        {/* Quick Links Column */}
-        <div className="footerColumn">
-          <h4 className="columnTitle">QUICK LINKS</h4>
-          <ul className="linkList">
-            <li><a href="#" className="footerLink">Home</a></li>
-            <li><a href="#" className="footerLink">Browse Cars</a></li>
-            <li><a href="#" className="footerLink">List Your Car</a></li>
-            <li><a href="#" className="footerLink">About Us</a></li>
-          </ul>
-        </div>
-
-        {/* Resources Column */}
-        <div className="footerColumn">
-          <h4 className="columnTitle">RESOURCES</h4>
-          <ul className="linkList">
-            <li><a href="#" className="footerLink">Help Center</a></li>
-            <li><a href="#" className="footerLink">Terms of Service</a></li>
-            <li><a href="#" className="footerLink">Privacy Policy</a></li>
-            <li><a href="#" className="footerLink">Insurance</a></li>
-          </ul>
-        </div>
-
-        {/* Contact Column */}
-        <div className="footerColumn">
-          <h4 className="columnTitle">CONTACT</h4>
-          <div className="contactInfo">
-            <div className="contactItem">
-              <MapPin size={16} className="contactIcon" />
-              <div>
-                <div>1234 Luxury Drive</div>
-                <div>San Francisco, CA 94107</div>
+  <div className="bg-gray-50">
+      <div className="bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12">
+          {/* Grid Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16 mb-12">
+            {/* Brand Column */}
+            <div className="lg:col-span-2 lg:max-w-md text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start mb-5">
+                <div className="text-3xl mr-2">🚗</div>
+                <span className="text-2xl font-bold text-gray-900">CarRental</span>
+              </div>
+              <p className="text-base text-gray-600 leading-relaxed mb-6">
+                Premium car rental service with a wide selection of luxury and everyday vehicles for all your driving needs.
+              </p>
+              <div className="flex gap-3 justify-center md:justify-start">
+                {[Facebook, Instagram, Twitter, Mail].map((Icon, i) => (
+                  <a
+                    key={i}
+                    href="#"
+                    className="flex items-center justify-center w-10 h-10 bg-gray-50 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:-translate-y-0.5 transition-all duration-200"
+                  >
+                    <Icon size={20} />
+                  </a>
+                ))}
               </div>
             </div>
-            <div className="contactItem">
-              <Phone size={16} className="contactIcon" />
-              <div>+1 234 567890</div>
+
+            {/* Quick Links */}
+            <div className="text-center md:text-left">
+              <h4 className="text-sm font-semibold text-gray-900 mb-5 tracking-wide">
+                QUICK LINKS
+              </h4>
+              <ul className="space-y-2">
+                {['Home', 'Browse Cars', 'List Your Car', 'About Us'].map((item, i) => (
+                  <li key={i}>
+                    <a
+                      href="#"
+                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200 block py-1.5"
+                    >
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="contactItem">
-              <Mail size={16} className="contactIcon" />
-              <div>info@example.com</div>
+
+            {/* Resources */}
+            <div className="text-center md:text-left">
+              <h4 className="text-sm font-semibold text-gray-900 mb-5 tracking-wide">
+                RESOURCES
+              </h4>
+              <ul className="space-y-2">
+                {['Help Center', 'Terms of Service', 'Privacy Policy', 'Insurance'].map((item, i) => (
+                  <li key={i}>
+                    <a
+                      href="#"
+                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200 block py-1.5"
+                    >
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div className="text-center md:text-left">
+              <h4 className="text-sm font-semibold text-gray-900 mb-5 tracking-wide">
+                CONTACT
+              </h4>
+              <div className="space-y-5">
+                <div className="flex items-start gap-3 justify-center md:justify-start">
+                  <MapPin size={18} className="text-gray-600 mt-0.5" />
+                  <div className="text-sm text-gray-600 text-left">
+                    <div>1234 Luxury Drive</div>
+                    <div>San Francisco, CA 94107</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 justify-center md:justify-start">
+                  <Phone size={18} className="text-gray-600 mt-0.5" />
+                  <div className="text-sm text-gray-600">+1 234 567890</div>
+                </div>
+                <div className="flex items-start gap-3 justify-center md:justify-start">
+                  <Mail size={18} className="text-gray-600 mt-0.5" />
+                  <div className="text-sm text-gray-600">info@example.com</div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Footer Bottom */}
-      <div className="footerBottom">
-        <div className="copyright">
-          © 2025 Brand. All rights reserved.
-        </div>
-        <div className="legalLinks">
-          <a href="#" className="legalLink">Privacy</a>
-          <span className="separator">|</span>
-          <a href="#" className="legalLink">Terms</a>
-          <span className="separator">|</span>
-          <a href="#" className="legalLink">Cookies</a>
+          {/* Bottom Bar */}
+          <div className="flex flex-col md:flex-row justify-between items-center border-t border-gray-200 pt-6">
+            <div className="text-sm text-gray-600 mb-4 md:mb-0">
+              © 2025 CarRental. All rights reserved.
+            </div>
+            <div className="flex items-center gap-5 text-center">
+              {['Privacy', 'Terms', 'Cookies'].map((item, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                >
+                  {item}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 </div>
 
     </div>

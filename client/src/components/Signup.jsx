@@ -38,17 +38,16 @@ export default function SignUp() {
     if (validate()) {
       // Proceed with signup logic
       const signupData = {
-        userName,
+        name:userName,
         email,
         password,
       };
 
-      let data = await fetch("http://localhost:5000/api/user/signup", {
+      let data = await fetch("http://localhost:5000/api/users/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify(signupData),
       });
       data = await data.json();

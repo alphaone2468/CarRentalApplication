@@ -15,12 +15,14 @@
 }
 .mainCar{
     transform: scale(1.1);
+    margin-top: calc(100vh - 723px);
 }
 
 .container {
   padding: 20px;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0px auto;
 }
 
 .grid {
@@ -232,7 +234,7 @@
   }
 
   .carImage {
-    max-width: 400px;
+    /* max-width: 400px; */
     transform: translateX(0);
   }
 }
@@ -247,7 +249,7 @@
   }
 
   .carImage {
-    max-width: 300px;
+    /* max-width: 300px; */
   }
 }
 

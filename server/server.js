@@ -2,9 +2,18 @@ const express=require("express");
 const app=express();
 const cors=require("cors");
 const bcrypt=require("bcrypt");
+const cookieParser = require("cookie-parser");
 
-app.use(express.json());
-app.use(cors());
+require('./config/db');
+
+app.use(cookieParser());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(cors({
+    origin: 'http://localhost:5173', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+}));
 
 
 app.use('/api/users', require('./routes/users'));

@@ -1,282 +1,138 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, MapPin } from 'lucide-react';
 
 export default function MyBookings() {
-    const [bookings] = useState([
-    {
-      id: 1,
-      carName: 'Toyota Corolla',
-      carDetails: '2021 • Sedan • Los Angeles',
-      image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      status: 'pending',
-      rentalPeriod: '2025-07-30 To 2025-07-24',
-      pickupLocation: 'Los Angeles',
-      totalPrice: '$780',
-      bookedDate: '2025-07-28'
-    }
-  ]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchBookings = async () => {
+      const response = await fetch('http://localhost:5000/api/bookings/user/self', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      const data = await response.json();
+      console.log(data);
+      setBookings(data);
+      setLoading(false);
+    };
 
-  const getStatusStyle = (status) => {
+    fetchBookings();
+  }, []);
+
+  const getStatusClasses = (status) => {
+    const baseClasses = "px-3 py-1 rounded-full text-xs font-medium lowercase";
     switch (status) {
       case 'pending':
-        return {
-          backgroundColor: '#fef2f2',
-          color: '#dc2626',
-          border: '1px solid #fecaca'
-        };
+        return `${baseClasses} bg-red-50 text-red-600 border border-red-200`;
       case 'confirmed':
-        return {
-          backgroundColor: '#f0f9ff',
-          color: '#0284c7',
-          border: '1px solid #bae6fd'
-        };
+        return `${baseClasses} bg-blue-50 text-blue-600 border border-blue-200`;
       case 'completed':
-        return {
-          backgroundColor: '#f0fdf4',
-          color: '#16a34a',
-          border: '1px solid #bbf7d0'
-        };
+        return `${baseClasses} bg-green-50 text-green-600 border border-green-200`;
       default:
-        return {
-          backgroundColor: '#f9fafb',
-          color: '#6b7280',
-          border: '1px solid #e5e7eb'
-        };
+        return `${baseClasses} bg-gray-50 text-gray-600 border border-gray-200`;
     }
   };
 
-
-
   return (
-    <div>
-      <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>My Bookings</h1>
-        <p style={styles.subtitle}>View and manage your all car bookings</p>
+    <div className="max-w-6xl mx-auto px-4 md:px-5 py-5 md:py-10 font-sans bg-white min-h-screen">
+      <div className="mb-6 md:mb-10 text-center md:text-left">
+        <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3 leading-tight">
+          My Bookings
+        </h1>
+        <p className="text-base md:text-lg text-gray-500">
+          View and manage your all car bookings
+        </p>
       </div>
 
-      <div style={styles.bookingsContainer}>
+      <div className="flex flex-col gap-4 md:gap-6">
         {bookings.map((booking) => (
-          <div key={booking.id} style={styles.bookingCard}>
-            <div style={styles.leftSection}>
-              <div style={styles.imageContainer}>
+          <div 
+            key={booking.id} 
+            className="flex flex-col md:flex-row p-4 md:p-6 border border-gray-200 rounded-2xl bg-white shadow-sm gap-4 md:gap-6"
+          >
+            {/* Left Section - Car Image and Info */}
+            <div className="flex gap-4 items-center md:items-start flex-none">
+              <div className="w-24 h-16 md:w-30 md:h-20 rounded-xl overflow-hidden flex-shrink-0">
                 <img 
-                  src={booking.image} 
+                  src={booking.carId.images} 
                   alt={booking.carName}
-                  style={styles.carImage}
+                  className="w-full h-full object-cover"
                 />
               </div>
               
-              <div style={styles.carInfo}>
-                <h3 style={styles.carName}>{booking.carName}</h3>
-                <p style={styles.carDetails}>{booking.carDetails}</p>
+              <div className="flex flex-col justify-center flex-1">
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-1">
+                  {booking.carId.model}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {booking.carDetails}
+                </p>
               </div>
             </div>
 
-            <div style={styles.middleSection}>
-              <div style={styles.bookingHeader}>
-                <span style={styles.bookingId}>Booking #{booking.id}</span>
-                <span 
-                  style={{
-                    ...styles.statusBadge,
-                    ...getStatusStyle(booking.status)
-                  }}
-                >
+            {/* Middle Section - Booking Details */}
+            <div className="flex-1 flex flex-col gap-3 md:gap-4">
+              <div className="flex items-center justify-between md:justify-start gap-3 flex-wrap">
+                <span className="text-base font-semibold text-gray-900">
+                  Booking #{booking.id}
+                </span>
+                <span className={getStatusClasses(booking.status)}>
                   {booking.status}
                 </span>
               </div>
 
-              <div style={styles.bookingDetails}>
-                <div style={styles.detailItem}>
-                  <div style={styles.detailIcon}>
-                    <Calendar size={16} color="#666" />
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <Calendar size={16} className="text-gray-600" />
                   </div>
-                  <div style={styles.detailContent}>
-                    <span style={styles.detailLabel}>Rental Period</span>
-                    <span style={styles.detailValue}>{booking.rentalPeriod}</span>
+                  <div className="flex flex-col gap-0.5 flex-1">
+                    <span className="text-xs font-medium text-gray-500">
+                      Rental Period
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {booking.startDate.slice(0, 10)} to {booking.endDate.slice(0, 10)}
+                    </span>
                   </div>
                 </div>
 
-                <div style={styles.detailItem}>
-                  <div style={styles.detailIcon}>
-                    <MapPin size={16} color="#666" />
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <MapPin size={16} className="text-gray-600" />
                   </div>
-                  <div style={styles.detailContent}>
-                    <span style={styles.detailLabel}>Pick-up Location</span>
-                    <span style={styles.detailValue}>{booking.pickupLocation}</span>
+                  <div className="flex flex-col gap-0.5 flex-1">
+                    <span className="text-xs font-medium text-gray-500">
+                      Pick-up Location
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {booking.pickupLocation}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div style={styles.rightSection}>
-              <div style={styles.priceSection}>
-                <span style={styles.priceLabel}>Total Price</span>
-                <span style={styles.totalPrice}>{booking.totalPrice}</span>
+            {/* Right Section - Price and Date */}
+            <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-2 flex-none w-full md:w-auto">
+              <div className="flex flex-col items-start md:items-end gap-1">
+                <span className="text-xs font-medium text-gray-500">
+                  Total Price
+                </span>
+                <span className="text-xl md:text-2xl font-bold text-blue-600">
+                  {booking.totalPrice}
+                </span>
               </div>
-              <p style={styles.bookedDate}>Booked on {booking.bookedDate}</p>
+              <p className="text-xs text-gray-400 self-end md:self-auto">
+                Booked on {booking.bookedDate}
+              </p>
             </div>
           </div>
         ))}
       </div>
     </div>
-    </div>
-  )
+  );
 }
-
-
-const styles = {
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '40px 20px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    backgroundColor: '#fff',
-    minHeight: '100vh',
-  },
-  header: {
-    marginBottom: '40px',
-  },
-  title: {
-    fontSize: '48px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    margin: '0 0 12px 0',
-    lineHeight: '1.1',
-  },
-  subtitle: {
-    fontSize: '18px',
-    color: '#6b7280',
-    margin: '0',
-  },
-  bookingsContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '24px',
-  },
-  bookingCard: {
-    display: 'flex',
-    padding: '24px',
-    border: '1px solid #e5e7eb',
-    borderRadius: '16px',
-    backgroundColor: '#fff',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-    gap: '24px',
-    alignItems: 'flex-start',
-  },
-  leftSection: {
-    display: 'flex',
-    gap: '16px',
-    alignItems: 'flex-start',
-    flex: '0 0 auto',
-  },
-  imageContainer: {
-    width: '120px',
-    height: '80px',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    flexShrink: 0,
-  },
-  carImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  carInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-  },
-  carName: {
-    fontSize: '20px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    margin: '0 0 4px 0',
-  },
-  carDetails: {
-    fontSize: '14px',
-    color: '#6b7280',
-    margin: '0',
-  },
-  middleSection: {
-    flex: '1',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  bookingHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  bookingId: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  statusBadge: {
-    padding: '4px 12px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: '500',
-    textTransform: 'lowercase',
-  },
-  bookingDetails: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  detailItem: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '8px',
-  },
-  detailIcon: {
-    marginTop: '2px',
-    flexShrink: 0,
-  },
-  detailContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-  },
-  detailLabel: {
-    fontSize: '12px',
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  detailValue: {
-    fontSize: '14px',
-    color: '#1a1a1a',
-    fontWeight: '500',
-  },
-  rightSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '8px',
-    flex: '0 0 auto',
-  },
-  priceSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '4px',
-  },
-  priceLabel: {
-    fontSize: '12px',
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  totalPrice: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#2563eb',
-  },
-  bookedDate: {
-    fontSize: '12px',
-    color: '#9ca3af',
-    margin: '0',
-  },
-};

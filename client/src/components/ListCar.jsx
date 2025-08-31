@@ -3,21 +3,20 @@ import { Upload, Camera, DollarSign, Calendar, MapPin, Car, Users, Fuel, Setting
 
 const ListCar = () => {
   const [formData, setFormData] = useState({
-    carMake: '',
-    carModel: '',
+    brand: '',
+    model: '',
     year: '',
-    category: '',
-    seats: '',
-    transmission: '',
-    fuelType: '',
-    location: '',
-    dailyRate: '',
-    availability: '',
+    pickupLocation: '',
     description: '',
-    images: []
+    seater: '',
+    driveType: '',
+    transmission: '',
+    images: [],
+    price: 0
   });
 
-  const [dragActive, setDragActive] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -25,40 +24,389 @@ const ListCar = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
-  const handleDrop = (e) => {
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Required field validations
+    if (!formData.brand.trim()) {
+      newErrors.brand = 'Brand is required';
+    }
+
+    if (!formData.model.trim()) {
+      newErrors.model = 'Model is required';
+    }
+
+    if (!formData.year) {
+      newErrors.year = 'Year is required';
+    }
+
+    if (!formData.pickupLocation.trim()) {
+      newErrors.pickupLocation = 'Pickup location is required';
+    }
+
+    if (!formData.seater) {
+      newErrors.seater = 'Number of seats is required';
+    }
+
+    if (!formData.driveType) {
+      newErrors.driveType = 'Drive type is required';
+    }
+
+    if (!formData.transmission) {
+      newErrors.transmission = 'Transmission type is required';
+    }
+
+    if (formData.images.length === 0) {
+      newErrors.images = 'At least one car image is required';
+    }
+
+    // Optional: Description validation (minimum length)
+    if (formData.description.trim() && formData.description.trim().length < 10) {
+      newErrors.description = 'Description should be at least 10 characters long';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
     
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files);
+    // Validate form
+    if (!validateForm()) {
+      // Scroll to first error
+      const firstErrorField = document.querySelector('.error-field');
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Transform data to match the Car model schema
+      const carData = {
+        // userId will be set on the backend based on authenticated user
+        images: formData.images[0], // Taking first image as string
+        brand: formData.brand.trim(),
+        model: formData.model.trim(),
+        year: formData.year,
+        pickupLocation: formData.pickupLocation.trim(),
+        price: parseFloat(formData.price),
+        description: formData.description.trim(),
+        features: {
+          seater: parseInt(formData.seater),
+          driveType: formData.driveType,
+          transmission: formData.transmission
+        }
+      };
+
+      console.log('Car data to be saved:', carData);
+      
+      // Here you would make API call to save the data
+      let response = await fetch('http://localhost:5000/api/cars', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', 
+        body: JSON.stringify(carData)
+      });
+
+      response  = await response.json();
+      console.log(response);
+      
+      // Reset form on success
+      setFormData({
+        brand: '',
+        model: '',
+        year: '',
+        pickupLocation: '',
+        description: '',
+        seater: '',
+        driveType: '',
+        transmission: '',
+        images: []
+      });
+      
+    } catch (error) {
+      console.error('Error submitting car listing:', error);
+      alert('Error submitting listing. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleFiles = (files) => {
-    const fileArray = Array.from(files).slice(0, 5); // Max 5 images
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...fileArray].slice(0, 5)
-    }));
+    const file = files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({
+          ...prev,
+          images: 'Please select a valid image file'
+        }));
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({
+          ...prev,
+          images: 'Image size should be less than 5MB'
+        }));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setFormData(prev => ({
+          ...prev,
+          images: [reader.result] // Store as base64 string to match model
+        }));
+        
+        // Clear image error when valid image is uploaded
+        if (errors.images) {
+          setErrors(prev => ({
+            ...prev,
+            images: ''
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert('Car listing submitted successfully!');
-    console.log('Form data:', formData);
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      backgroundColor: '#f8fafc',
+      padding: '2rem 1rem'
+    },
+    header: {
+      textAlign: 'center',
+      marginBottom: '3rem'
+    },
+    title: {
+      fontSize: '2.5rem',
+      fontWeight: 'bold',
+      color: '#1e293b',
+      marginBottom: '0.5rem'
+    },
+    subtitle: {
+      fontSize: '1.1rem',
+      color: '#64748b',
+      maxWidth: '600px',
+      margin: '0 auto'
+    },
+    form: {
+      maxWidth: '800px',
+      margin: '0 auto',
+      backgroundColor: '#ffffff',
+      borderRadius: '12px',
+      padding: '2rem',
+      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+    },
+    section: {
+      marginBottom: '2.5rem'
+    },
+    sectionTitle: {
+      fontSize: '1.5rem',
+      fontWeight: '600',
+      color: '#1e293b',
+      marginBottom: '0.5rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    },
+    sectionSubtitle: {
+      color: '#64748b',
+      marginBottom: '1.5rem',
+      fontSize: '0.9rem'
+    },
+    uploadArea: {
+      border: '2px dashed #cbd5e1',
+      borderRadius: '8px',
+      padding: '3rem 2rem',
+      textAlign: 'center',
+      backgroundColor: '#f8fafc',
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+      position: 'relative'
+    },
+    uploadContent: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '1rem'
+    },
+    uploadText: {
+      color: '#64748b',
+      fontSize: '1rem'
+    },
+    uploadLink: {
+      color: '#3b82f6',
+      fontWeight: '500',
+      cursor: 'pointer'
+    },
+    hiddenInput: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      opacity: 0,
+      cursor: 'pointer'
+    },
+    imagePreview: {
+      display: 'flex',
+      gap: '1rem',
+      marginTop: '1rem',
+      flexWrap: 'wrap'
+    },
+    previewItem: {
+      position: 'relative'
+    },
+    previewImage: {
+      width: '120px',
+      height: '120px',
+      objectFit: 'cover',
+      borderRadius: '8px',
+      border: '2px solid #e2e8f0'
+    },
+    formGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+      gap: '1.5rem'
+    },
+    formGroup: {
+      display: 'flex',
+      flexDirection: 'column'
+    },
+    label: {
+      fontWeight: '500',
+      color: '#374151',
+      marginBottom: '0.5rem',
+      fontSize: '0.9rem'
+    },
+    input: {
+      padding: '0.75rem 1rem',
+      border: '2px solid #e5e7eb',
+      borderRadius: '6px',
+      fontSize: '1rem',
+      transition: 'border-color 0.2s',
+      outline: 'none'
+    },
+    inputError: {
+      padding: '0.75rem 1rem',
+      border: '2px solid #ef4444',
+      borderRadius: '6px',
+      fontSize: '1rem',
+      transition: 'border-color 0.2s',
+      outline: 'none',
+      backgroundColor: '#fef2f2'
+    },
+    select: {
+      padding: '0.75rem 1rem',
+      border: '2px solid #e5e7eb',
+      borderRadius: '6px',
+      fontSize: '1rem',
+      backgroundColor: 'white',
+      cursor: 'pointer',
+      outline: 'none'
+    },
+    selectError: {
+      padding: '0.75rem 1rem',
+      border: '2px solid #ef4444',
+      borderRadius: '6px',
+      fontSize: '1rem',
+      backgroundColor: '#fef2f2',
+      cursor: 'pointer',
+      outline: 'none'
+    },
+    textarea: {
+      padding: '0.75rem 1rem',
+      border: '2px solid #e5e7eb',
+      borderRadius: '6px',
+      fontSize: '1rem',
+      resize: 'vertical',
+      fontFamily: 'inherit',
+      outline: 'none',
+      width:"100%"
+    },
+    textareaError: {
+      padding: '0.75rem 1rem',
+      border: '2px solid #ef4444',
+      borderRadius: '6px',
+      fontSize: '1rem',
+      resize: 'vertical',
+      fontFamily: 'inherit',
+      outline: 'none',
+      backgroundColor: '#fef2f2'
+    },
+    uploadAreaError: {
+      border: '2px dashed #ef4444',
+      borderRadius: '8px',
+      padding: '3rem 2rem',
+      textAlign: 'center',
+      backgroundColor: '#fef2f2',
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+      position: 'relative'
+    },
+    errorText: {
+      color: '#ef4444',
+      fontSize: '0.875rem',
+      marginTop: '0.25rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.25rem'
+    },
+    submitSection: {
+      textAlign: 'center',
+      paddingTop: '2rem',
+      borderTop: '1px solid #e5e7eb'
+    },
+    submitButton: {
+      backgroundColor: '#3b82f6',
+      color: 'white',
+      padding: '1rem 2.5rem',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '1.1rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'background-color 0.2s',
+      marginBottom: '1rem',
+      minWidth: '200px'
+    },
+    submitButtonDisabled: {
+      backgroundColor: '#9ca3af',
+      color: 'white',
+      padding: '1rem 2.5rem',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '1.1rem',
+      fontWeight: '600',
+      cursor: 'not-allowed',
+      marginBottom: '1rem',
+      minWidth: '200px'
+    },
+    submitNote: {
+      color: '#6b7280',
+      fontSize: '0.9rem'
+    }
   };
 
   return (
@@ -71,27 +419,23 @@ const ListCar = () => {
       <div style={styles.form}>
         {/* Car Images Upload */}
         <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>Car Photos</h3>
-          <p style={styles.sectionSubtitle}>Upload up to 5 high-quality photos of your car</p>
+          <h3 style={styles.sectionTitle}>
+            <Camera size={20} />
+            Car Photos
+          </h3>
+          <p style={styles.sectionSubtitle}>Upload a high-quality photo of your car</p>
           
           <div 
-            style={{
-              ...styles.uploadArea,
-              ...(dragActive ? styles.uploadAreaActive : {})
-            }}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
+            style={errors.images ? styles.uploadAreaError : styles.uploadArea}
+            className={errors.images ? 'error-field' : ''}
           >
             <div style={styles.uploadContent}>
               <Camera size={48} color="#9ca3af" />
               <p style={styles.uploadText}>
-                Drag and drop photos here, or <span style={styles.uploadLink}>browse</span>
+                Drag and drop photo here, or <span style={styles.uploadLink}>browse</span>
               </p>
               <input
                 type="file"
-                multiple
                 accept="image/*"
                 onChange={(e) => handleFiles(e.target.files)}
                 style={styles.hiddenInput}
@@ -99,105 +443,148 @@ const ListCar = () => {
             </div>
           </div>
 
+          {errors.images && (
+            <div style={styles.errorText}>
+              ⚠ {errors.images}
+            </div>
+          )}
+
           {formData.images.length > 0 && (
             <div style={styles.imagePreview}>
-              {formData.images.map((file, index) => (
-                <div key={index} style={styles.previewItem}>
-                  <img 
-                    src={URL.createObjectURL(file)} 
-                    alt={`Preview ${index + 1}`}
-                    style={styles.previewImage}
-                  />
-                </div>
-              ))}
+              <div style={styles.previewItem}>
+                <img 
+                  src={formData.images[0]} 
+                  alt="Car preview"
+                  style={styles.previewImage}
+                />
+              </div>
             </div>
           )}
         </div>
 
         {/* Car Details */}
         <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>Car Details</h3>
+          <h3 style={styles.sectionTitle}>
+            <Car size={20} />
+            Car Details
+          </h3>
           
           <div style={styles.formGrid}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Make</label>
+            <div style={styles.formGroup} className={errors.brand ? 'error-field' : ''}>
+              <label style={styles.label}>Brand</label>
               <input
                 type="text"
-                name="carMake"
-                value={formData.carMake}
+                name="brand"
+                value={formData.brand}
                 onChange={handleInputChange}
                 placeholder="e.g., Toyota"
-                style={styles.input}
+                style={errors.brand ? styles.inputError : styles.input}
                 required
               />
+              {errors.brand && (
+                <div style={styles.errorText}>
+                  ⚠ {errors.brand}
+                </div>
+              )}
             </div>
 
-            <div style={styles.formGroup}>
+            <div style={styles.formGroup} className={errors.model ? 'error-field' : ''}>
               <label style={styles.label}>Model</label>
               <input
                 type="text"
-                name="carModel"
-                value={formData.carModel}
+                name="model"
+                value={formData.model}
                 onChange={handleInputChange}
                 placeholder="e.g., Corolla"
-                style={styles.input}
+                style={errors.model ? styles.inputError : styles.input}
                 required
               />
+              {errors.model && (
+                <div style={styles.errorText}>
+                  ⚠ {errors.model}
+                </div>
+              )}
             </div>
 
-            <div style={styles.formGroup}>
+            <div style={styles.formGroup} className={errors.year ? 'error-field' : ''}>
               <label style={styles.label}>Year</label>
               <select
                 name="year"
                 value={formData.year}
                 onChange={handleInputChange}
-                style={styles.select}
+                style={errors.year ? styles.selectError : styles.select}
                 required
               >
                 <option value="">Select Year</option>
                 {[...Array(30)].map((_, i) => {
                   const year = new Date().getFullYear() - i;
-                  return <option key={year} value={year}>{year}</option>;
+                  return <option key={year} value={year.toString()}>{year}</option>;
                 })}
               </select>
+              {errors.year && (
+                <div style={styles.errorText}>
+                  ⚠ {errors.year}
+                </div>
+              )}
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Category</label>
-              <select
-                name="category"
-                value={formData.category}
+            <div style={styles.formGroup} className={errors.pickupLocation ? 'error-field' : ''}>
+              <label style={styles.label}>Pickup Location</label>
+              <input
+                type="text"
+                name="pickupLocation"
+                value={formData.pickupLocation}
                 onChange={handleInputChange}
-                style={styles.select}
+                placeholder="e.g., Downtown Mumbai"
+                style={errors.pickupLocation ? styles.inputError : styles.input}
                 required
-              >
-                <option value="">Select Category</option>
-                <option value="sedan">Sedan</option>
-                <option value="suv">SUV</option>
-                <option value="hatchback">Hatchback</option>
-                <option value="convertible">Convertible</option>
-                <option value="truck">Truck</option>
-                <option value="van">Van</option>
-              </select>
+              />
+              {errors.pickupLocation && (
+                <div style={styles.errorText}>
+                  ⚠ {errors.pickupLocation}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
+
+            <div style={{...styles.formGroup , marginBottom: '1rem'}} className={errors.price ? 'error-field' : ''} >
+              <label style={styles.label}>Cost per day</label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                placeholder="e.g., 100"
+                style={errors.price ? styles.inputError : styles.input}
+                required
+              />
+              {errors.price && (
+                <div style={styles.errorText}>
+                  ⚠ {errors.price}
+                </div>
+              )}
+            </div>
+
         {/* Car Features */}
         <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>Car Features</h3>
+          <h3 style={styles.sectionTitle}>
+            <Settings size={20} />
+            Car Features
+          </h3>
           
           <div style={styles.formGrid}>
-            <div style={styles.formGroup}>
+            <div style={styles.formGroup} className={errors.seater ? 'error-field' : ''}>
               <label style={styles.label}>
-                <Users size={16} style={styles.labelIcon} />
+                <Users size={16} style={{display: 'inline', marginRight: '0.25rem'}} />
                 Number of Seats
               </label>
               <select
-                name="seats"
-                value={formData.seats}
+                name="seater"
+                value={formData.seater}
                 onChange={handleInputChange}
-                style={styles.select}
+                style={errors.seater ? styles.selectError : styles.select}
                 required
               >
                 <option value="">Select Seats</option>
@@ -205,20 +592,25 @@ const ListCar = () => {
                 <option value="4">4 Seats</option>
                 <option value="5">5 Seats</option>
                 <option value="7">7 Seats</option>
-                <option value="8">8+ Seats</option>
+                <option value="8">8 Seats</option>
               </select>
+              {errors.seater && (
+                <div style={styles.errorText}>
+                  ⚠ {errors.seater}
+                </div>
+              )}
             </div>
 
-            <div style={styles.formGroup}>
+            <div style={styles.formGroup} className={errors.transmission ? 'error-field' : ''}>
               <label style={styles.label}>
-                <Settings size={16} style={styles.labelIcon} />
+                <Settings size={16} style={{display: 'inline', marginRight: '0.25rem'}} />
                 Transmission
               </label>
               <select
                 name="transmission"
                 value={formData.transmission}
                 onChange={handleInputChange}
-                style={styles.select}
+                style={errors.transmission ? styles.selectError : styles.select}
                 required
               >
                 <option value="">Select Transmission</option>
@@ -226,81 +618,36 @@ const ListCar = () => {
                 <option value="manual">Manual</option>
                 <option value="semi-automatic">Semi-Automatic</option>
               </select>
+              {errors.transmission && (
+                <div style={styles.errorText}>
+                  ⚠ {errors.transmission}
+                </div>
+              )}
             </div>
 
-            <div style={styles.formGroup}>
+            <div style={styles.formGroup} className={errors.driveType ? 'error-field' : ''}>
               <label style={styles.label}>
-                <Fuel size={16} style={styles.labelIcon} />
-                Fuel Type
+                <Fuel size={16} style={{display: 'inline', marginRight: '0.25rem'}} />
+                Drive Type
               </label>
               <select
-                name="fuelType"
-                value={formData.fuelType}
+                name="driveType"
+                value={formData.driveType}
                 onChange={handleInputChange}
-                style={styles.select}
+                style={errors.driveType ? styles.selectError : styles.select}
                 required
               >
-                <option value="">Select Fuel Type</option>
-                <option value="gasoline">Gasoline</option>
+                <option value="">Select Drive Type</option>
+                <option value="petrol">Petrol</option>
                 <option value="diesel">Diesel</option>
                 <option value="hybrid">Hybrid</option>
                 <option value="electric">Electric</option>
               </select>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>
-                <MapPin size={16} style={styles.labelIcon} />
-                Location
-              </label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                placeholder="e.g., New York"
-                style={styles.input}
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Pricing & Availability */}
-        <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>Pricing & Availability</h3>
-          
-          <div style={styles.formGrid}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>
-                <DollarSign size={16} style={styles.labelIcon} />
-                Daily Rate
-              </label>
-              <input
-                type="number"
-                name="dailyRate"
-                value={formData.dailyRate}
-                onChange={handleInputChange}
-                placeholder="300"
-                style={styles.input}
-                min="1"
-                required
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>
-                <Calendar size={16} style={styles.labelIcon} />
-                Available From
-              </label>
-              <input
-                type="date"
-                name="availability"
-                value={formData.availability}
-                onChange={handleInputChange}
-                style={styles.input}
-                required
-              />
+              {errors.driveType && (
+                <div style={styles.errorText}>
+                  ⚠ {errors.driveType}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -310,206 +657,40 @@ const ListCar = () => {
           <h3 style={styles.sectionTitle}>Description</h3>
           <p style={styles.sectionSubtitle}>Tell renters about your car's condition, special features, or any important details</p>
           
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Describe your car, its condition, any special features, maintenance history, or house rules for renters..."
-            style={styles.textarea}
-            rows="5"
-          />
+          <div className={errors.description ? 'error-field' : ''}>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Describe your car, its condition, any special features, maintenance history, or house rules for renters..."
+              style={errors.description ? styles.textareaError : styles.textarea}
+              rows="5"
+            />
+            {errors.description && (
+              <div style={styles.errorText}>
+                ⚠ {errors.description}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Submit Button */}
         <div style={styles.submitSection}>
-          <button onClick={handleSubmit} style={styles.submitButton}>
-            List My Car
+          <button 
+            type="submit" 
+            onClick={handleSubmit}
+            style={isSubmitting ? styles.submitButtonDisabled : styles.submitButton}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'List My Car'}
           </button>
           <p style={styles.submitNote}>
             Your listing will be reviewed and approved within 24 hours
           </p>
         </div>
-      </div>
+              </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: '40px 20px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    backgroundColor: '#fff',
-    minHeight: '100vh',
-  },
-  header: {
-    marginBottom: '40px',
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: '48px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    margin: '0 0 12px 0',
-    lineHeight: '1.1',
-  },
-  subtitle: {
-    fontSize: '18px',
-    color: '#6b7280',
-    margin: '0',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '40px',
-  },
-  section: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  sectionTitle: {
-    fontSize: '24px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    margin: '0',
-  },
-  sectionSubtitle: {
-    fontSize: '14px',
-    color: '#6b7280',
-    margin: '0',
-  },
-  uploadArea: {
-    border: '2px dashed #d1d5db',
-    borderRadius: '12px',
-    padding: '40px 20px',
-    textAlign: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    position: 'relative',
-  },
-  uploadAreaActive: {
-    borderColor: '#2563eb',
-    backgroundColor: '#f0f9ff',
-  },
-  uploadContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  uploadText: {
-    fontSize: '16px',
-    color: '#6b7280',
-    margin: '0',
-  },
-  uploadLink: {
-    color: '#2563eb',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-  },
-  hiddenInput: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    opacity: 0,
-    cursor: 'pointer',
-  },
-  imagePreview: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-    gap: '12px',
-    marginTop: '16px',
-  },
-  previewItem: {
-    position: 'relative',
-  },
-  previewImage: {
-    width: '100%',
-    height: '80px',
-    objectFit: 'cover',
-    borderRadius: '8px',
-    border: '1px solid #e5e7eb',
-  },
-  formGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '20px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  label: {
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#374151',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-  },
-  labelIcon: {
-    color: '#6b7280',
-  },
-  input: {
-    padding: '12px 16px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '16px',
-    backgroundColor: '#fff',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  },
-  select: {
-    padding: '12px 16px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '16px',
-    backgroundColor: '#fff',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    cursor: 'pointer',
-  },
-  textarea: {
-    padding: '12px 16px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '16px',
-    backgroundColor: '#fff',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    resize: 'vertical',
-    fontFamily: 'inherit',
-  },
-  submitSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '12px',
-    paddingTop: '20px',
-  },
-  submitButton: {
-    padding: '16px 32px',
-    backgroundColor: '#2563eb',
-    color: 'white',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '16px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-    minWidth: '200px',
-  },
-  submitNote: {
-    fontSize: '12px',
-    color: '#9ca3af',
-    margin: '0',
-    textAlign: 'center',
-  },
 };
 
 export default ListCar;

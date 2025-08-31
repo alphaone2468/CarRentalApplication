@@ -43,7 +43,7 @@ function Login() {
     },100)
     const validateData = validate();
     if (validateData) {
-      let data = await fetch("http://localhost:5000/api/user/login", {
+      let data = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,10 +55,11 @@ function Login() {
       console.log(data);
 
       if(data.status==="SUCCESS"){
-        toast.success("Login Successful");
-        navigate("/");
+        toast.success("Login Successfull");
+        window.location.href="/";
       }
       else if(data.status==="FAILED"){
+        console.log("i AM IN")
         toast.error(data.message);
       }
     }

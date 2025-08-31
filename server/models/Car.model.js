@@ -30,6 +30,10 @@ const carSchema = new mongoose.Schema({
   description: {
     type: String
   },
+  price: {
+    type: Number,
+    required: true
+  },
   features: {
     seater: {
       type: Number,
@@ -49,4 +53,3 @@ const carSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('Car', carSchema);
-x

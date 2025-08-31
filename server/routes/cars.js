@@ -1,13 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const Car = require('../models/Car');
+const Car = require('../models/Car.model');
+const {verifyToken} = require("../utils/auth");
 
 // Create Car
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
-    const car = await Car.create(req.body);
+    console.log(req.user);
+    let car = new Car({ ...req.body, userId: req.user._id })
+    car = await car.save();
     res.status(201).json(car);
   } catch (err) {
+    console.log(err);
     res.status(400).json({ error: err.message });
   }
 });

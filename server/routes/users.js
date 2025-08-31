@@ -1,35 +1,62 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const User = require('../models/User.model');
+const bcrypt=require("bcrypt");
+const { generateToken,verifyToken } = require('../utils/auth');
 
-// Create User
-router.post('/', async (req, res) => {
+
+
+router.post('/signup', async (req, res) => {
   try {
-    const user = await User.create(req.body);
-    res.status(201).json(user);
+    const { name, email, password } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({status:"FAILED", message: 'User already exists' });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let user = new User({ name, email, password: hashedPassword });
+    user = await user.save();
+    console.log(user);
+    res.status(201).json({ status: "SUCCESS", user });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ status: "FAILED", message: 'Server error' });
   }
 });
 
-// Get All Users
-router.get('/', async (req, res) => {
-  const users = await User.find();
-  res.json(users);
-});
-
-// Get User by ID
-router.get('/:id', async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.sendStatus(404);
-    res.json(user);
+    const { email, password } = req.body;
+    console.log(email,password);
+    const user = await User.findOne({ email }).lean();
+    if (!user) {
+      return res.status(400).json({ status: "FAILED", message: 'Invalid email or password' });
+    }
+    console.log(user);
+    console.log(await bcrypt.hash(password, 10));
+    const matchPassword = await bcrypt.compare(password, user.password);
+    if (!matchPassword) {
+      return res.status(400).json({ status: "FAILED", message: 'Invalid email or password' });
+    }
+    delete user.password;
+    const token = generateToken(user);
+    console.log(token);
+    
+    res.cookie("access_token",token,{
+      httpOnly: true,
+      sameSite: 'strict'
+    })
+    res.json({ status: "SUCCESS", user });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ status: "FAILED", message: 'Server error' });
   }
 });
 
-// Update User
+router.get("/loggedIn",verifyToken,(req,res)=>{
+  res.json({ status: "SUCCESS", user: req.user });
+});
+
 router.put('/:id', async (req, res) => {
   try {
     const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -39,7 +66,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete User
 router.delete('/:id', async (req, res) => {
   await User.findByIdAndDelete(req.params.id);
   res.sendStatus(204);
